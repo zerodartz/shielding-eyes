@@ -16,7 +16,7 @@
     .container {
       max-width: 512px;
       margin: 0 auto;
-      padding: 10px;
+      padding: 16px;
     }
     h1 {
       text-align: center;
@@ -71,7 +71,7 @@
     #canvas-container {
       display: flex;
       justify-content: center;
-      margin-bottom: 16px;
+      margin: 8px;
       max-width: 100%;
       overflow: hidden;
     }
@@ -118,13 +118,15 @@
   <div class="container">
     <h1>Shielding eyes Web editor</h1>
     <p id="instructions">UPLOAD photo. TAP "Shield eyes". Drag to move. USE Sliders to resize or rotate.</p>
+     <div class="controls">
+      <input type="file" id="image-upload" accept="image/*">
+      <button id="save-image">Save photo</button>
+     </div>
     <div id="canvas-container">
       <canvas id="editor-canvas" width="512" height="512"></canvas>
     </div>
     <div class="controls">
-      <input type="file" id="image-upload" accept="image/*">
       <button id="add-censor">Shield eyes</button>
-      <button id="save-image">Save photo</button>
     </div>
     <div id="slider-container">
       <div class="slider-group">
