@@ -8,4 +8,5 @@ Just upload photo, add shielding black bar, resize and rotate. Then save if you 
 Could have few bugs where the bar goes missing randomly while moving - just refresh and try again.
 
 Demo guide video of how to use app:
-![demo video guide](https://www.youtube.com/shorts/3Dgpn_igDOE)
+
+[![Video](https://raw.githubusercontent.com/zerodartz/shielding-eyes/media/guide-video-thumb.jpg)](https://raw.githubusercontent.com/zerodartz/shielding-eyes/media/shielding-app-guide-1.mov)
