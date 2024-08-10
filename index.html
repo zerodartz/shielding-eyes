@@ -72,6 +72,7 @@
       display: flex;
       justify-content: center;
       margin: 8px;
+      border: 1px solid #ffffff;
       max-width: 100%;
       overflow: hidden;
     }
@@ -120,7 +121,7 @@
     <p id="instructions">UPLOAD photo. TAP "Shield eyes". Drag to move. USE Sliders to resize or rotate.</p>
      <div class="controls">
       <input type="file" id="image-upload" accept="image/*">
-      <button id="save-image">Save photo</button>
+      <button id="save-image">Save shielded photo</button>
      </div>
     <div id="canvas-container">
       <canvas id="editor-canvas" width="512" height="512"></canvas>
@@ -130,12 +131,12 @@
     </div>
     <div id="slider-container">
       <div class="slider-group">
-        <label for="width-slider">Width: <span id="width-value">170px</span></label>
-        <input type="range" id="width-slider" min="52" max="450" value="170">
+        <label for="width-slider">Width: <span id="width-value">50%</span></label>
+        <input type="range" id="width-slider" min="52" max="450" value="225">
       </div>
       <div class="slider-group">
-        <label for="height-slider">Height: <span id="height-value">80px</span></label>
-        <input type="range" id="height-slider" min="16" max="300" value="80">
+        <label for="height-slider">Height: <span id="height-value">50%</span></label>
+        <input type="range" id="height-slider" min="16" max="300" value="150">
       </div>
       <div class="slider-group">
         <label for="rotation-slider">Rotation: <span id="rotation-value">0°</span></label>
