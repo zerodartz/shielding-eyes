@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shielding eyes Web editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      margin: 0;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .container {
+      max-width: 512px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    #slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      background: #333;
+      outline: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      height: 10px;
+      border-radius: 5px;
+    }
+    input[type="range"]:hover {
+      opacity: 1;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      background: #ffffff;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #ffffff;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+    #canvas-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    canvas {
+      border: 1px solid #ffffff;
+      max-width: 100%;
+      height: auto;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button, input[type="file"]::file-selector-button {
+      background-color: #121212;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      width: 100%;
+      text-align: center;
+    }
+    button:hover, input[type="file"]::file-selector-button:hover {
+      background-color: #333333;
+    }
+    #instructions {
+      text-align: center;
+      font-style: italic;
+      font-size: 14px;
+    }
+    @media (max-width: 512px) {
+      h1 {
+        font-size: 20px;
+      }
+      #instructions {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Shielding eyes Web editor</h1>
+    <p id="instructions">UPLOAD photo. TAP "Shield eyes". Drag to move. USE Sliders to resize or rotate.</p>
+    <div id="canvas-container">
+      <canvas id="editor-canvas" width="512" height="512"></canvas>
+    </div>
+    <div class="controls">
+      <input type="file" id="image-upload" accept="image/*">
+      <button id="add-censor">Shield eyes</button>
+      <button id="save-image">Save photo</button>
+    </div>
+    <div id="slider-container">
+      <div class="slider-group">
+        <label for="width-slider">Width: <span id="width-value">170px</span></label>
+        <input type="range" id="width-slider" min="52" max="450" value="170">
+      </div>
+      <div class="slider-group">
+        <label for="height-slider">Height: <span id="height-value">80px</span></label>
+        <input type="range" id="height-slider" min="16" max="300" value="80">
+      </div>
+      <div class="slider-group">
+        <label for="rotation-slider">Rotation: <span id="rotation-value">0°</span></label>
+        <input type="range" id="rotation-slider" min="0" max="360" value="0">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let canvas = document.getElementById('editor-canvas');
+    let ctx = canvas.getContext('2d');
+    let image;
+    let rect = {
+      x: 100,
+      y: 100,
+      w: 200,
+      h: 50,
+      rotation: 0,
+      dragging: false,
+      resizing: false,
+      offsetX: 0,
+      offsetY: 0
+    };
+
+    function resizeCanvas() {
+      const container = document.getElementById('canvas-container');
+      const containerWidth = container.clientWidth;
+      const scale = containerWidth / canvas.width;
+      canvas.style.width = `${containerWidth}px`;
+      canvas.style.height = `${canvas.height * scale}px`;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    document.getElementById('image-upload').addEventListener('change', handleImageUpload);
+    document.getElementById('add-censor').addEventListener('click', addCensorBar);
+    document.getElementById('save-image').addEventListener('click', saveImage);
+
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('touchend', handleTouchEnd);
+
+    const widthSlider = document.getElementById('width-slider');
+    const heightSlider = document.getElementById('height-slider');
+    const rotationSlider = document.getElementById('rotation-slider');
+    const widthValueLabel = document.getElementById('width-value');
+    const heightValueLabel = document.getElementById('height-value');
+    const rotationValueLabel = document.getElementById('rotation-value');
+
+    widthSlider.addEventListener('input', handleWidthChange);
+    heightSlider.addEventListener('input', handleHeightChange);
+    rotationSlider.addEventListener('input', handleRotationChange);
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function(f) {
+        image = new Image();
+        image.onload = function() {
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        };
+        image.src = f.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function addCensorBar() {
+      redraw();
+    }
+
+    function saveImage() {
+      const dataURL = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = 'shielded-eyes-pfp.png';
+      link.click();
+    }
+
+    function handleMouseDown(e) {
+      handleStart(e.clientX, e.clientY);
+    }
+
+    function handleMouseMove(e) {
+      handleMove(e.clientX, e.clientY);
+    }
+
+    function handleMouseUp() {
+      handleEnd();
+    }
+
+    function handleTouchStart(e) {
+      if (e.touches.length === 1) {
+        e.preventDefault();
+        handleStart(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }
+
+    function handleTouchMove(e) {
+      if (e.touches.length === 1) {
+        e.preventDefault();
+        handleMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }
+
+    function handleTouchEnd() {
+      handleEnd();
+    }
+
+    function handleStart(clientX, clientY) {
+  const canvasRect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / canvasRect.width;
+  const scaleY = canvas.height / canvasRect.height;
+  const mouseX = (clientX - canvasRect.left) * scaleX;
+  const mouseY = (clientY - canvasRect.top) * scaleY;
+  
+  const rotatedPoint = rotatePoint(mouseX, mouseY, rect.x + rect.w/2, rect.y + rect.h/2, -rect.rotation);
+
+  if (isInsideRect(rotatedPoint.x, rotatedPoint.y, rect)) {
+    rect.dragging = true;
+    rect.offsetX = rotatedPoint.x - rect.x;
+    rect.offsetY = rotatedPoint.y - rect.y;
+  } else if (isInsideRect(rotatedPoint.x, rotatedPoint.y, {
+    x: rect.x + rect.w - 20,
+    y: rect.y + rect.h - 20,
+    w: 20,
+    h: 20
+  })) {
+    rect.resizing = true;
+  }
+}
+
+function handleMove(clientX, clientY) {
+  if (!rect.dragging && !rect.resizing) return;
+
+  const canvasRect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / canvasRect.width;
+  const scaleY = canvas.height / canvasRect.height;
+  const mouseX = (clientX - canvasRect.left) * scaleX;
+  const mouseY = (clientY - canvasRect.top) * scaleY;
+  
+  if (rect.dragging) {
+    const rotatedPoint = rotatePoint(mouseX, mouseY, rect.x + rect.w/2, rect.y + rect.h/2, -rect.rotation);
+    rect.x = rotatedPoint.x - rect.offsetX;
+    rect.y = rotatedPoint.y - rect.offsetY;
+    redraw();
+  } else if (rect.resizing) {
+    const rotatedPoint = rotatePoint(mouseX, mouseY, rect.x, rect.y, -rect.rotation);
+    rect.w = Math.max(10, rotatedPoint.x - rect.x); // Ensure minimum width
+    rect.h = Math.max(10, rotatedPoint.y - rect.y); // Ensure minimum height
+    redraw();
+  }
+}
+
+    function handleEnd() {
+      rect.dragging = false;
+      rect.resizing = false;
+    }
+
+    function isInsideRect(x, y, rect) {
+      return x > rect.x && x < rect.x + rect.w && y > rect.y && y < rect.y + rect.h;
+    }
+
+    function rotatePoint(x, y, cx, cy, angle) {
+      const radians = (Math.PI / 180) * angle,
+            cos = Math.cos(radians),
+            sin = Math.sin(radians),
+            nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+            ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+      return {x: nx, y: ny};
+    }
+
+    function redraw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (image) {
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      }
+      
+      ctx.save();
+      ctx.translate(rect.x + rect.w/2, rect.y + rect.h/2);
+      ctx.rotate(rect.rotation * Math.PI / 180);
+      ctx.fillStyle = 'black';
+      ctx.fillRect(-rect.w/2, -rect.h/2, rect.w, rect.h);
+      ctx.restore();
+    }
+
+    function handleWidthChange() {
+      rect.w = parseInt(widthSlider.value);
+      widthValueLabel.textContent = `${rect.w}px`;
+      redraw();
+    }
+
+    function handleHeightChange() {
+      rect.h = parseInt(heightSlider.value);
+      heightValueLabel.textContent = `${rect.h}px`;
+      redraw();
+    }
+
+    function handleRotationChange() {
+      rect.rotation = parseInt(rotationSlider.value);
+      rotationValueLabel.textContent = `${rect.rotation}°`;
+      redraw();
+    }
+  </script>
+</body>
+</html>
