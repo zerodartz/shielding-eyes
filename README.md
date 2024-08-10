@@ -9,4 +9,5 @@ Could have few bugs where the bar goes missing randomly while moving - just refr
 
 Demo guide video of how to use app:
 
-[![Video](https://raw.githubusercontent.com/zerodartz/shielding-eyes/main/media/shielding-app-guide-1.mov)
+https://youtube.com/shorts/3Dgpn_igDOE?si=WimYY8NVR2D-7VWI
+
