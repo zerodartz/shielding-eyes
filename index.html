@@ -118,12 +118,12 @@
   <div class="container">
     <h1>Shielding eyes Photo web app ◼️◼️👀🛡️</h1>
     <p id="instructions">UPLOAD photo. TAP "Shield eyes". Drag to move. USE Sliders in bottom to resize and rotate.</p>
-     <div class="controls">
+    <div class="controls">
       <input type="file" id="image-upload" accept="image/*">
       <button id="save-image">Save shielded photo</button>
-     </div>
+    </div>
     <div id="canvas-container">
-      <canvas id="editor-canvas" width="512" height="512"></canvas>
+      <canvas id="editor-canvas"></canvas>
     </div>
     <div class="controls">
       <button id="add-censor">Shield eyes</button>
@@ -172,9 +172,6 @@
       canvas.style.height = `${canvas.height * scale}px`;
     }
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
     document.getElementById('image-upload').addEventListener('change', handleImageUpload);
     document.getElementById('add-censor').addEventListener('click', addCensorBar);
     document.getElementById('save-image').addEventListener('click', saveImage);
@@ -209,6 +206,21 @@
       reader.onload = function(f) {
         image = new Image();
         image.onload = function() {
+          // Calculate the correct canvas size
+          let width, height;
+          if (image.width > image.height) {
+            width = 512;
+            height = 512 * (image.height / image.width);
+          } else {
+            height = 512;
+            width = 512 * (image.width / image.height);
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          resizeCanvas();
+
           ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
         };
         image.src = f.target.result;
