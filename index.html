@@ -131,16 +131,16 @@
     </div>
     <div id="slider-container">
       <div class="slider-group">
-        <label for="width-slider">Width: <span id="width-value">50%</span></label>
-        <input type="range" id="width-slider" min="52" max="450" value="225">
+        <label for="width-slider">Width: <span id="width-value">210px</span></label>
+        <input type="range" id="width-slider" min="30" max="360" value="210">
       </div>
       <div class="slider-group">
-        <label for="height-slider">Height: <span id="height-value">50%</span></label>
-        <input type="range" id="height-slider" min="16" max="300" value="150">
+        <label for="height-slider">Height: <span id="height-value">70px</span></label>
+        <input type="range" id="height-slider" min="10" max="180" value="70">
       </div>
       <div class="slider-group">
-        <label for="rotation-slider">Rotation: <span id="rotation-value">180°</span></label>
-        <input type="range" id="rotation-slider" min="0" max="360" value="180">
+        <label for="rotation-slider">Rotation: <span id="rotation-value">0°</span></label>
+        <input type="range" id="rotation-slider" min="-89" max="89" value="0">
       </div>
     </div>
   </div>
@@ -150,16 +150,20 @@
     let ctx = canvas.getContext('2d');
     let image;
     let rect = {
-      x: 100,
-      y: 100,
-      w: 200,
-      h: 50,
+      x: 150,
+      y: 180,
+      w: 210,
+      h: 70,
       rotation: 0,
       dragging: false,
-      resizing: false,
       offsetX: 0,
       offsetY: 0
     };
+
+    // Helper to keep coordinates within bounds
+    function constrain(value, min, max) {
+      return Math.max(min, Math.min(value, max));
+    }
 
     function resizeCanvas() {
       const container = document.getElementById('canvas-container');
@@ -257,57 +261,34 @@
     }
 
     function handleStart(clientX, clientY) {
-  const canvasRect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / canvasRect.width;
-  const scaleY = canvas.height / canvasRect.height;
-  const mouseX = (clientX - canvasRect.left) * scaleX;
-  const mouseY = (clientY - canvasRect.top) * scaleY;
-  
-  const rotatedPoint = rotatePoint(mouseX, mouseY, rect.x + rect.w/2, rect.y + rect.h/2, -rect.rotation);
+      const { canvasX, canvasY } = getCanvasCoordinates(clientX, clientY);
+      
+      const rotatedPoint = rotatePoint(canvasX, canvasY, rect.x + rect.w / 2, rect.y + rect.h / 2, -rect.rotation);
 
-  if (isInsideRect(rotatedPoint.x, rotatedPoint.y, rect)) {
-    rect.dragging = true;
-    rect.offsetX = rotatedPoint.x - rect.x;
-    rect.offsetY = rotatedPoint.y - rect.y;
-  } else if (isInsideRect(rotatedPoint.x, rotatedPoint.y, {
-    x: rect.x + rect.w - 20,
-    y: rect.y + rect.h - 20,
-    w: 20,
-    h: 20
-  })) {
-    rect.resizing = true;
-  }
-}
+      if (isInsideRect(rotatedPoint.x, rotatedPoint.y, rect)) {
+        rect.dragging = true;
+        rect.offsetX = rotatedPoint.x - rect.x;
+        rect.offsetY = rotatedPoint.y - rect.y;
+      }
+    }
 
-function handleMove(clientX, clientY) {
-  if (!rect.dragging && !rect.resizing) return;
+    function handleMove(clientX, clientY) {
+      if (!rect.dragging) return;
 
-  const canvasRect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / canvasRect.width;
-  const scaleY = canvas.height / canvasRect.height;
-  const mouseX = (clientX - canvasRect.left) * scaleX;
-  const mouseY = (clientY - canvasRect.top) * scaleY;
-  
-  if (rect.dragging) {
-    const rotatedPoint = rotatePoint(mouseX, mouseY, rect.x + rect.w/2, rect.y + rect.h/2, -rect.rotation);
-    rect.x = rotatedPoint.x - rect.offsetX;
-    rect.y = rotatedPoint.y - rect.offsetY;
-    redraw();
-  } else if (rect.resizing) {
-    const rotatedPoint = rotatePoint(mouseX, mouseY, rect.x, rect.y, -rect.rotation);
-    rect.w = Math.max(10, rotatedPoint.x - rect.x); // Ensure minimum width
-    rect.h = Math.max(10, rotatedPoint.y - rect.y); // Ensure minimum height
-    redraw();
-  }
-}
+      const { canvasX, canvasY } = getCanvasCoordinates(clientX, clientY);
+      const rotatedPoint = rotatePoint(canvasX, canvasY, rect.x + rect.w / 2, rect.y + rect.h / 2, -rect.rotation);
+      rect.x = constrain(rotatedPoint.x - rect.offsetX, 0, canvas.width - rect.w);
+      rect.y = constrain(rotatedPoint.y - rect.offsetY, 0, canvas.height - rect.h);
+
+      redraw();
+    }
 
     function handleEnd() {
       rect.dragging = false;
-      rect.resizing = false;
     }
 
     function isInsideRect(x, y, rect) {
-      return x > rect.x && x < rect.x + rect.w && y > rect.y && y < rect.y + rect.h;
+      return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
     }
 
     function rotatePoint(x, y, cx, cy, angle) {
@@ -319,17 +300,27 @@ function handleMove(clientX, clientY) {
       return {x: nx, y: ny};
     }
 
+    function getCanvasCoordinates(clientX, clientY) {
+      const canvasRect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / canvasRect.width;
+      const scaleY = canvas.height / canvasRect.height;
+      const canvasX = (clientX - canvasRect.left) * scaleX;
+      const canvasY = (clientY - canvasRect.top) * scaleY;
+      return { canvasX, canvasY };
+    }
+
     function redraw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (image) {
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
       }
-      
+
+      // Translate, rotate, then draw the rectangle
       ctx.save();
-      ctx.translate(rect.x + rect.w/2, rect.y + rect.h/2);
+      ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
       ctx.rotate(rect.rotation * Math.PI / 180);
       ctx.fillStyle = 'black';
-      ctx.fillRect(-rect.w/2, -rect.h/2, rect.w, rect.h);
+      ctx.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
       ctx.restore();
     }
 
@@ -346,7 +337,7 @@ function handleMove(clientX, clientY) {
     }
 
     function handleRotationChange() {
-      rect.rotation = parseInt(rotationSlider.value);
+      rect.rotation = constrain(parseInt(rotationSlider.value), -89, 89);
       rotationValueLabel.textContent = `${rect.rotation}°`;
       redraw();
     }
