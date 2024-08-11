@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shielding Eyes Photo Web App</title>
+  <title>Shielding Eyes App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -170,7 +170,7 @@
 
 <body>
   <div class="container">
-    <h1>Shielding Eyes on Photos ◼️◼️👀🛡️</h1>
+    <h1>Shielding Eyes Photo App ◼️◼️👀🛡️</h1>
     <p id="instructions">GUIDE: after import TAP "Shield eyes". Drag box to move it.<br> USE Sliders in bottom to resize&rotate. SAVE (mobile) opens new tab - long press on photo to save</p>
     <div class="button-container">
       <label for="image-upload">🖼️ Import Photo</label>
@@ -185,19 +185,19 @@
     </div>
     <div id="slider-container">
       <div class="slider-group">
-        <label for="width-slider">Width: <span id="width-value">210px</span></label>
-        <input type="range" id="width-slider" min="30" max="360" value="210">
+        <label for="width-slider">Width: <span id="width-value">250px</span></label>
+        <input type="range" id="width-slider" min="30" max="500" value="250">
       </div>
       <div class="slider-group">
-        <label for="height-slider">Height: <span id="height-value">70px</span></label>
-        <input type="range" id="height-slider" min="10" max="180" value="70">
+        <label for="height-slider">Height: <span id="height-value">100px</span></label>
+        <input type="range" id="height-slider" min="10" max="500" value="100">
       </div>
       <div class="slider-group">
         <label for="rotation-slider">Rotation: <span id="rotation-value">0°</span></label>
         <input type="range" id="rotation-slider" min="-89" max="89" value="0">
       </div>
     </div>
-    <p id="updates">update_2: (mobile fix)After clicking "Save photo" new tab opens - long pressing the image you can save into your photos app now.<br>
+    <p id="updates">update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>
       update_1: All aspect ratios supported now (like 4:3, 16:9, 1:2 etc)</p>
   </div>
   <div id="footer">Made by Zerodartz, 2024 - Report bugs <a href="https://github.com/zerodartz/shielding-eyes/">on
@@ -286,6 +286,9 @@
       image.src = f.target.result;
     };
 
+
+      reader.readAsDataURL(file);
+    }
 
     function addCensorBar() {
       redraw();
