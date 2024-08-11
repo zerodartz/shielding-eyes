@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shielding eyes Photo app</title>
+  <title>BETA - Shielding eyes Photo app</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,35 +14,42 @@
       padding: 10px;
       box-sizing: border-box;
     }
+
     .container {
       max-width: 512px;
       margin: 0 auto;
       padding: 16px;
     }
+
     h1 {
       text-align: center;
       margin-bottom: 10px;
       font-size: 26px;
     }
+
     a {
       color: #fffeee
     }
+
     #slider-container {
       display: flex;
       flex-direction: column;
       gap: 8px;
       margin-bottom: 16px;
     }
+
     .slider-group {
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
+
     .slider-group label {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
+
     input[type="range"] {
       width: 100%;
       -webkit-appearance: none;
@@ -52,9 +60,11 @@
       height: 10px;
       border-radius: 5px;
     }
+
     input[type="range"]:hover {
       opacity: 1;
     }
+
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
@@ -64,6 +74,7 @@
       cursor: pointer;
       border-radius: 50%;
     }
+
     input[type="range"]::-moz-range-thumb {
       width: 20px;
       height: 20px;
@@ -71,6 +82,7 @@
       cursor: pointer;
       border-radius: 50%;
     }
+
     #canvas-container {
       display: flex;
       justify-content: center;
@@ -79,51 +91,62 @@
       max-width: 100%;
       overflow: hidden;
     }
+
     canvas {
       border: 1px solid #ffffff;
       max-width: 100%;
       height: auto;
     }
+
     .controls {
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-bottom: 20px;
     }
-    button, input[type="file"]::file-selector-button {
-      background-color: #121212;
-      color: #ffffff;
-      border: 2px solid #ffffff;
-      padding: 10px 20px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      width: 100%;
-      text-align: center;
-    }
-    button:hover, input[type="file"]::file-selector-button:hover {
+
+    button,
+    input[type="file"]::-webkit-file-upload-button {
+          background-color: #121212;
+          color: #ffffff;
+          border: 2px solid #ffffff;
+          padding: 10px 20px;
+          cursor: pointer;
+          transition: background-color 0.3s;
+          width: 100%;
+          text-align: center;
+        }
+
+    button:hover,
+    input[type="file"]::file-selector-button:hover {
       background-color: #333333;
     }
+
     #instructions {
       text-align: center;
       font-size: 16px;
     }
+
     #footer {
       text-align: center;
       font-size: 12px;
     }
+
     @media (max-width: 512px) {
       h1 {
         font-size: 20px;
       }
+
       #instructions {
         font-size: 12px;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <h1>Shielding eyes Photo web app ◼️◼️👀🛡️</h1>
+    <h1>BETA - Shielding eyes Photo web app ◼️◼️👀🛡️</h1>
     <p id="instructions">UPLOAD photo. TAP "Shield eyes". Drag to move. USE Sliders in bottom to resize and rotate.</p>
     <div class="controls">
       <input type="file" id="image-upload" accept="image/*">
@@ -149,13 +172,14 @@
         <input type="range" id="rotation-slider" min="-89" max="89" value="0">
       </div>
     </div>
-    <p id="instructions">update_1: all aspect ratios supported now(like 4:3, 16:9, 1:2 etc)</p>
+    <p id="instructions">update_1: all aspect ratios supported now (like 4:3, 16:9, 1:2 etc)</p>
   </div>
-  <div id="footer">Made by Zerodartz, 2024 - Report bugs <a href="https://github.com/zerodartz/shielding-eyes/">on GitHub</a><br>
-  <a href="https://zerodartz.github.io/shielding-eyes/">Production version</a>
+  <div id="footer">Made by Zerodartz, 2024 - Report bugs <a href="https://github.com/zerodartz/shielding-eyes/">on
+      GitHub</a><br>
+    <a href="https://zerodartz.github.io/shielding-eyes/">Production version</a>
   </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/camera-roll/1.0.1/camera-roll.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/camera-roll/1.0.1/camera-roll.min.js"></script>
   <script>
     let canvas = document.getElementById('editor-canvas');
     let ctx = canvas.getContext('2d');
@@ -215,9 +239,9 @@
 
       const reader = new FileReader();
 
-      reader.onload = function(f) {
+      reader.onload = function (f) {
         image = new Image();
-        image.onload = function() {
+        image.onload = function () {
           // Calculate the correct canvas size
           let width, height;
           if (image.width > image.height) {
@@ -246,43 +270,25 @@
     }
 
     function saveImage() {
-    const dataURL = canvas.toDataURL('image/png');
-    const blob = dataURLToBlob(dataURL);
+      const dataURL = canvas.toDataURL('image/png');
 
-    // For iOS Brave browser
-    if (navigator.userAgent.match(/Brave/i)) {
-    const fileSaver = require('file-saver');
-    fileSaver.saveAs(blob, 'shielded-eyes-pfp.png');
+      // Open the image in a new tab
+      const newTab = window.open();
+      newTab.document.body.innerHTML = `<img src="${dataURL}" alt="Saved Image" style="width:100%; height:auto;">`;
     }
-    // For iOS Safari
-    else if (navigator.userAgent.match(/Safari/i) && navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
-      const cameraRoll = require('camera-roll');
-      cameraRoll.savePhoto(blob, 'shielded-eyes-pfp.png', function() {
-      console.log('Photo saved to camera roll!');
-      }, function(error) {
-      console.error('Error saving photo:', error);
-      });
-    }
-    // For all other browsers
-    else {
-      const link = document.createElement('a');
-      link.href = dataURL;
-      link.download = 'shielded-eyes-pfp.png';
-      link.click();
-    }
-  }
 
-function dataURLToBlob(dataURL) {
-  const bytes = dataURL.split(',')[1];
-  const mime = dataURL.split(',')[0].split(':')[1].split(';')[0];
-  const binary = atob(bytes);
-  const arrayBuffer = new ArrayBuffer(binary.length);
-  const uint8Array = new Uint8Array(arrayBuffer);
-  for (let i = 0; i < binary.length; i++) {
-    uint8Array[i] = binary.charCodeAt(i);
-  }
-  return new Blob([arrayBuffer], { type: mime });
-}
+
+    function dataURLToBlob(dataURL) {
+      const bytes = dataURL.split(',')[1];
+      const mime = dataURL.split(',')[0].split(':')[1].split(';')[0];
+      const binary = atob(bytes);
+      const arrayBuffer = new ArrayBuffer(binary.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < binary.length; i++) {
+        uint8Array[i] = binary.charCodeAt(i);
+      }
+      return new Blob([arrayBuffer], { type: mime });
+    }
 
     function handleMouseDown(e) {
       handleStart(e.clientX, e.clientY);
@@ -316,7 +322,7 @@ function dataURLToBlob(dataURL) {
 
     function handleStart(clientX, clientY) {
       const { canvasX, canvasY } = getCanvasCoordinates(clientX, clientY);
-      
+
       const rotatedPoint = rotatePoint(canvasX, canvasY, rect.x + rect.w / 2, rect.y + rect.h / 2, -rect.rotation);
 
       if (isInsideRect(rotatedPoint.x, rotatedPoint.y, rect)) {
@@ -347,11 +353,11 @@ function dataURLToBlob(dataURL) {
 
     function rotatePoint(x, y, cx, cy, angle) {
       const radians = (Math.PI / 180) * angle,
-            cos = Math.cos(radians),
-            sin = Math.sin(radians),
-            nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
-            ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
-      return {x: nx, y: ny};
+        cos = Math.cos(radians),
+        sin = Math.sin(radians),
+        nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+        ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+      return { x: nx, y: ny };
     }
 
     function getCanvasCoordinates(clientX, clientY) {
@@ -397,4 +403,5 @@ function dataURLToBlob(dataURL) {
     }
   </script>
 </body>
+
 </html>
