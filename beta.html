@@ -204,8 +204,6 @@
       GitHub</a><br>
     <a href="https://zerodartz.github.io/shielding-eyes/">Production version</a>
   </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/camera-roll/1.0.1/camera-roll.min.js"></script>
   <script>
     let canvas = document.getElementById('editor-canvas');
     let ctx = canvas.getContext('2d');
@@ -265,9 +263,9 @@
 
       const reader = new FileReader();
 
-      reader.onload = function (f) {
+      reader.onload = function(f) {
         image = new Image();
-        image.onload = function () {
+        image.onload = function() {
           // Calculate the correct canvas size
           let width, height;
           if (image.width > image.height) {
@@ -296,141 +294,138 @@
     }
 
     function saveImage() {
-      canvas.toBlob(function (blob) {
-        saveAs(blob, 'shielded-photo.png');
-      });
-    }
+    const dataURL = canvas.toDataURL('image/png');
+  
+    // Check if the device is mobile (iOS, Android, etc.)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    function getMousePos(e) {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
-    }
+    if (isMobile) {
+    // On mobile devices, open the image in a new tab for long-press saving
+      const newTab = window.open();
+      newTab.document.body.innerHTML = `<img src="${dataURL}" alt="Saved Image" style="width:100%; height:auto;">`;
+    } else {
+    // On desktop, trigger a download
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = 'shielded-eyes-pfp.png';
+      document.body.appendChild(link); // For Firefox, append the link to the DOM
+      link.click();
+      document.body.removeChild(link); // Remove the link after the download is triggered
+  }
+}
 
-    function getTouchPos(touch) {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-      };
-    }
-
-    function isPointInRect(point, rect) {
-      return point.x >= rect.x && point.x <= rect.x + rect.w &&
-             point.y >= rect.y && point.y <= rect.y + rect.h;
-    }
 
     function handleMouseDown(e) {
-      const mousePos = getMousePos(e);
-      if (isPointInRect(mousePos, rect)) {
-        rect.dragging = true;
-        rect.offsetX = mousePos.x - rect.x;
-        rect.offsetY = mousePos.y - rect.y;
-      }
+      handleStart(e.clientX, e.clientY);
     }
 
     function handleMouseMove(e) {
-      if (rect.dragging) {
-        const mousePos = getMousePos(e);
-        rect.x = constrain(mousePos.x - rect.offsetX, 0, canvas.width - rect.w);
-        rect.y = constrain(mousePos.y - rect.offsetY, 0, canvas.height - rect.h);
-        draw();
-      }
+      handleMove(e.clientX, e.clientY);
     }
 
     function handleMouseUp() {
-      rect.dragging = false;
+      handleEnd();
     }
 
     function handleTouchStart(e) {
-      const touch = e.touches[0];
-      const touchPos = getTouchPos(touch);
-      if (isPointInRect(touchPos, rect)) {
-        rect.dragging = true;
-        rect.offsetX = touchPos.x - rect.x;
-        rect.offsetY = touchPos.y - rect.y;
+      if (e.touches.length === 1) {
+        e.preventDefault();
+        handleStart(e.touches[0].clientX, e.touches[0].clientY);
       }
     }
 
     function handleTouchMove(e) {
-      if (rect.dragging) {
-        const touch = e.touches[0];
-        const touchPos = getTouchPos(touch);
-        rect.x = constrain(touchPos.x - rect.offsetX, 0, canvas.width - rect.w);
-        rect.y = constrain(touchPos.y - rect.offsetY, 0, canvas.height - rect.h);
-        draw();
+      if (e.touches.length === 1) {
+        e.preventDefault();
+        handleMove(e.touches[0].clientX, e.touches[0].clientY);
       }
     }
 
     function handleTouchEnd() {
+      handleEnd();
+    }
+
+    function handleStart(clientX, clientY) {
+      const { canvasX, canvasY } = getCanvasCoordinates(clientX, clientY);
+      
+      const rotatedPoint = rotatePoint(canvasX, canvasY, rect.x + rect.w / 2, rect.y + rect.h / 2, -rect.rotation);
+
+      if (isInsideRect(rotatedPoint.x, rotatedPoint.y, rect)) {
+        rect.dragging = true;
+        rect.offsetX = rotatedPoint.x - rect.x;
+        rect.offsetY = rotatedPoint.y - rect.y;
+      }
+    }
+
+    function handleMove(clientX, clientY) {
+      if (!rect.dragging) return;
+
+      const { canvasX, canvasY } = getCanvasCoordinates(clientX, clientY);
+      const rotatedPoint = rotatePoint(canvasX, canvasY, rect.x + rect.w / 2, rect.y + rect.h / 2, -rect.rotation);
+      rect.x = constrain(rotatedPoint.x - rect.offsetX, 0, canvas.width - rect.w);
+      rect.y = constrain(rotatedPoint.y - rect.offsetY, 0, canvas.height - rect.h);
+
+      redraw();
+    }
+
+    function handleEnd() {
       rect.dragging = false;
     }
 
-    function handleWidthChange() {
-      rect.w = widthSlider.value;
-      widthValueLabel.textContent = `${rect.w}px`;
-      draw();
+    function isInsideRect(x, y, rect) {
+      return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
     }
 
-    function handleHeightChange() {
-      rect.h = heightSlider.value;
-      heightValueLabel.textContent = `${rect.h}px`;
-      draw();
+    function rotatePoint(x, y, cx, cy, angle) {
+      const radians = (Math.PI / 180) * angle,
+            cos = Math.cos(radians),
+            sin = Math.sin(radians),
+            nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+            ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+      return {x: nx, y: ny};
     }
 
-    function handleRotationChange() {
-      rect.rotation = rotationSlider.value;
-      rotationValueLabel.textContent = `${rect.rotation}°`;
-      draw();
+    function getCanvasCoordinates(clientX, clientY) {
+      const canvasRect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / canvasRect.width;
+      const scaleY = canvas.height / canvasRect.height;
+      const canvasX = (clientX - canvasRect.left) * scaleX;
+      const canvasY = (clientY - canvasRect.top) * scaleY;
+      return { canvasX, canvasY };
     }
 
-    function draw() {
+    function redraw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      if (image) {
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      }
 
+      // Translate, rotate, then draw the rectangle
       ctx.save();
       ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
-      ctx.rotate((rect.rotation * Math.PI) / 180);
-      ctx.fillStyle = 'rgba(8, 8, 8, 1)';
+      ctx.rotate(rect.rotation * Math.PI / 180);
+      ctx.fillStyle = 'black';
       ctx.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
       ctx.restore();
     }
 
-    function addCensorBar() {
-      draw();
+    function handleWidthChange() {
+      rect.w = parseInt(widthSlider.value);
+      widthValueLabel.textContent = `${rect.w}px`;
+      redraw();
     }
 
-    function saveImage() {
-      canvas.toBlob(function (blob) {
-        saveAs(blob, 'shielded-photo.png');
-      });
+    function handleHeightChange() {
+      rect.h = parseInt(heightSlider.value);
+      heightValueLabel.textContent = `${rect.h}px`;
+      redraw();
     }
 
-    function getMousePos(e) {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
+    function handleRotationChange() {
+      rect.rotation = constrain(parseInt(rotationSlider.value), -89, 89);
+      rotationValueLabel.textContent = `${rect.rotation}°`;
+      redraw();
     }
-
-    function getTouchPos(touch) {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-      };
-    }
-
-    function isPointInRect(point, rect) {
-      return point.x >= rect.x && point.x <= rect.x + rect.w &&
-             point.y >= rect.y && point.y <= rect.y + rect.h;
-    }
-
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas(); // Initial resize to fit container
   </script>
 </body>
 
