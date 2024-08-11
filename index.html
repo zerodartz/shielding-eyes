@@ -209,10 +209,10 @@
     let ctx = canvas.getContext('2d');
     let image;
     let rect = {
-      x: 150,
-      y: 180,
-      w: 210,
-      h: 70,
+      x: 140,
+      y: 170,
+      w: 250,
+      h: 100,
       rotation: 0,
       dragging: false,
       offsetX: 0,
@@ -266,28 +266,26 @@
       reader.onload = function(f) {
         image = new Image();
         image.onload = function() {
-          // Calculate the correct canvas size
-          let width, height;
-          if (image.width > image.height) {
+        // Calculate the correct canvas size
+        let width, height;
+        if (image.width < image.height) {
             width = 512;
             height = 512 * (image.height / image.width);
-          } else {
+        } else {
             height = 512;
             width = 512 * (image.width / image.height);
-          }
+        }
 
-          canvas.width = width;
-          canvas.height = height;
+        canvas.width = width;
+        canvas.height = height;
 
-          resizeCanvas();
+        resizeCanvas();
 
-          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-        };
-        image.src = f.target.result;
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
       };
+      image.src = f.target.result;
+    };
 
-      reader.readAsDataURL(file);
-    }
 
     function addCensorBar() {
       redraw();
