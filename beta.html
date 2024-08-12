@@ -195,6 +195,10 @@
       <div class="slider-group">
         <label for="rotation-slider">Rotation: <span id="rotation-value">0°</span></label>
         <input type="range" id="rotation-slider" min="-89" max="89" value="0">
+      <div class="slider-group">
+        <label for="rounding-slider">Rounding: <span id="rounding-value">0px</span></label>
+        <input type="range" id="rounding-slider" min="0" max="250" value="0">
+      </div>
       </div>
     </div>
     <p id="updates">update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>
@@ -218,7 +222,16 @@
       offsetX: 0,
       offsetY: 0
     };
+    const roundingSlider = document.getElementById('rounding-slider');
+    const roundingValueLabel = document.getElementById('rounding-value');
 
+    roundingSlider.addEventListener('input', handleRoundingChange);
+
+    function handleRoundingChange() {
+    rect.rounding = parseInt(roundingSlider.value);
+    roundingValueLabel.textContent = `${rect.rounding}px`;
+    redraw();
+    }
     // Helper to keep coordinates within bounds
     function constrain(value, min, max) {
       return Math.max(min, Math.min(value, max));
@@ -396,19 +409,29 @@
     }
 
     function redraw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (image) {
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      }
-
-      // Translate, rotate, then draw the rectangle
-      ctx.save();
-      ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
-      ctx.rotate(rect.rotation * Math.PI / 180);
-      ctx.fillStyle = 'black';
-      ctx.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
-      ctx.restore();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (image) {
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     }
+
+    // Translate, rotate, then draw the rounded rectangle
+    ctx.save();
+    ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
+    ctx.rotate(rect.rotation * Math.PI / 180);
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    ctx.moveTo(-rect.w / 2 + rect.rounding, -rect.h / 2);
+    ctx.arcTo(rect.w / 2, -rect.h / 2, rect.w / 2, rect.h / 2, rect.rounding);
+    ctx.arcTo(rect.w / 2, rect.h / 2, -rect.w / 2, rect.h / 2, rect.rounding);
+    ctx.arcTo(-rect.w / 2, rect.h / 2, -rect.w / 2, -rect.h / 2, rect.rounding);
+    ctx.arcTo(-rect.w / 2, -rect.h / 2, rect.w / 2, -rect.h / 2, rect.rounding);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    }
+
+    // Initialize rect properties
+    rect.rounding = 0;  // Adding rounding property
 
     function handleWidthChange() {
       rect.w = parseInt(widthSlider.value);
