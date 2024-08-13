@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BETA - Shielding Eyes Photo Web App</title>
+  <title>BETA - Shielding Eyes App</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -119,7 +119,7 @@
       gap: 10px;
     }
 
-    button {
+    button, .button-container label {
       background-color: #121212;
       color: #ffffff;
       border: 2px solid #ffffff;
@@ -129,30 +129,36 @@
       flex: 1;
       text-align: center;
       font-size: 14px;
-    }
-
-    .button-container label {
-    background-color: #121212;
-    color: #ffffff;
-    border: 2px solid #ffffff;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    flex: 1;
-    text-align: center;
-    font-size: 14px;
-    /* Added styles for vertical centering */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .button-container input[type="file"] {
       display: none;
     }
 
-    button:hover {
+    button:hover, .button-container label:hover {
       background-color: #333333;
+    }
+
+    .shield-button {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      background-color: #121212;
+      color: #ffffff;
+      transition: background-color 0.3s;
+    }
+
+    .shield-button:hover {
+      background-color: #333333;
+    }
+
+    .shield-button.active {
+      background-color: #444444;
     }
 
     #footer {
@@ -170,7 +176,7 @@
 
 <body>
   <div class="container">
-    <h1>BETA - Shielding Eyes Photo Web App ◼️◼️👀🛡️</h1>
+    <h1>BETA - Shielding Eyes (white bar added) ◼️◼️👀🛡️</h1>
     <p id="instructions">GUIDE: after import TAP "Shield eyes". Drag box to move it.<br> USE Sliders in bottom to resize&rotate. SAVE (mobile) opens new tab - long press on photo to save</p>
     <div class="button-container">
       <label for="image-upload">🖼️ Import Photo</label>
@@ -181,7 +187,10 @@
       <canvas id="editor-canvas"></canvas>
     </div>
     <div class="controls">
-      <button id="add-censor">🛡️ (shield) eyes</button>
+      <div class="button-container">
+        <button id="add-dark-censor" class="shield-button">🛡️ Dark shield</button>
+        <button id="add-light-censor" class="shield-button">💡 Light shield</button>
+      </div>
     </div>
     <div id="slider-container">
       <div class="slider-group">
@@ -195,13 +204,11 @@
       <div class="slider-group">
         <label for="rotation-slider">Rotation: <span id="rotation-value">0°</span></label>
         <input type="range" id="rotation-slider" min="-89" max="89" value="0">
-      <div class="slider-group">
-        <label for="rounding-slider">Rounding: <span id="rounding-value">0px</span></label>
-        <input type="range" id="rounding-slider" min="0" max="250" value="0">
-      </div>
       </div>
     </div>
-    <p id="updates">update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>
+    <p id="updates">
+      update_3: Light version of shielded bar added<br>
+      update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>
       update_1: All aspect ratios supported now (like 4:3, 16:9, 1:2 etc)</p>
   </div>
   <div id="footer">Made by Zerodartz, 2024 - Report bugs <a href="https://github.com/zerodartz/shielding-eyes/">on
@@ -220,18 +227,10 @@
       rotation: 0,
       dragging: false,
       offsetX: 0,
-      offsetY: 0
+      offsetY: 0,
+      color: 'black'
     };
-    const roundingSlider = document.getElementById('rounding-slider');
-    const roundingValueLabel = document.getElementById('rounding-value');
 
-    roundingSlider.addEventListener('input', handleRoundingChange);
-
-    function handleRoundingChange() {
-    rect.rounding = parseInt(roundingSlider.value);
-    roundingValueLabel.textContent = `${rect.rounding}px`;
-    redraw();
-    }
     // Helper to keep coordinates within bounds
     function constrain(value, min, max) {
       return Math.max(min, Math.min(value, max));
@@ -246,7 +245,8 @@
     }
 
     document.getElementById('image-upload').addEventListener('change', handleImageUpload);
-    document.getElementById('add-censor').addEventListener('click', addCensorBar);
+    document.getElementById('add-dark-censor').addEventListener('click', () => addCensorBar('black'));
+    document.getElementById('add-light-censor').addEventListener('click', () => addCensorBar('white'));
     document.getElementById('save-image').addEventListener('click', saveImage);
 
     canvas.addEventListener('mousedown', handleMouseDown);
@@ -299,11 +299,13 @@
       image.src = f.target.result;
     };
 
-
       reader.readAsDataURL(file);
     }
 
-    function addCensorBar() {
+    function addCensorBar(color) {
+      rect.color = color;
+      document.getElementById('add-dark-censor').classList.toggle('active', color === 'black');
+      document.getElementById('add-light-censor').classList.toggle('active', color === 'white');
       redraw();
     }
 
@@ -325,9 +327,8 @@
       document.body.appendChild(link); // For Firefox, append the link to the DOM
       link.click();
       document.body.removeChild(link); // Remove the link after the download is triggered
+    }
   }
-}
-
 
     function handleMouseDown(e) {
       handleStart(e.clientX, e.clientY);
@@ -409,29 +410,19 @@
     }
 
     function redraw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (image) {
-    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (image) {
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      }
 
-    // Translate, rotate, then draw the rounded rectangle
-    ctx.save();
-    ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
-    ctx.rotate(rect.rotation * Math.PI / 180);
-    ctx.fillStyle = 'black';
-    ctx.beginPath();
-    ctx.moveTo(-rect.w / 2 + rect.rounding, -rect.h / 2);
-    ctx.arcTo(rect.w / 2, -rect.h / 2, rect.w / 2, rect.h / 2, rect.rounding);
-    ctx.arcTo(rect.w / 2, rect.h / 2, -rect.w / 2, rect.h / 2, rect.rounding);
-    ctx.arcTo(-rect.w / 2, rect.h / 2, -rect.w / 2, -rect.h / 2, rect.rounding);
-    ctx.arcTo(-rect.w / 2, -rect.h / 2, rect.w / 2, -rect.h / 2, rect.rounding);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+      // Translate, rotate, then draw the rectangle
+      ctx.save();
+      ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
+      ctx.rotate(rect.rotation * Math.PI / 180);
+      ctx.fillStyle = rect.color;
+      ctx.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
+      ctx.restore();
     }
-
-    // Initialize rect properties
-    rect.rounding = 0;  // Adding rounding property
 
     function handleWidthChange() {
       rect.w = parseInt(widthSlider.value);
