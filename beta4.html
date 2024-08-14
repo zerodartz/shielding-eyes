@@ -439,7 +439,7 @@
 
       if (!isMobile) { // Desktop
         // Draw rotation handle (white circle with red curved arrow)
-        const handleSize = 20;  // Increased size for usability
+        const handleSize = 16;  // Increased size for usability
         const rotateX = rect.w / 2 - handleSize - 5;
         const rotateY = -rect.h / 2;
 
@@ -469,10 +469,13 @@
         ctx.stroke();
       } else { // Mobile
         // Draw resize handles
-        const handleSize = 8;
+        const handleSize = 16;
         ctx.fillStyle = 'white';
         ctx.strokeStyle = 'black';
         [
+          { x: -rect.w / 2, y: -rect.h / 2 },
+          { x: rect.w / 2, y: -rect.h / 2 },
+          { x: -rect.w / 2, y: rect.h / 2 },
           { x: rect.w / 2, y: rect.h / 2 },
         ].forEach(({ x, y }) => {
           ctx.beginPath();
