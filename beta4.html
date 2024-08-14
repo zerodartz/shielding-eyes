@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -121,7 +120,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="container">
     <h1>BETA - Shielding Eyes (white bar added) ◼️◼️👀🛡️</h1>
@@ -239,7 +237,17 @@
     }
 
     function saveImage() {
+      if (isMobile) {
+        showCornerPoints(false);
+      } else {
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // clear canvas
+        ctx.restore();
+      }
+      
       const dataURL = canvas.toDataURL('image/png');
+      
       if (isMobile) {
         const newTab = window.open();
         newTab.document.body.innerHTML = `<img src="${dataURL}" alt="Saved Image" style="width:100%; height:auto;">`;
@@ -251,62 +259,77 @@
         link.click();
         document.body.removeChild(link);
       }
+
+      if (isMobile) {
+        showCornerPoints(true);
+      }
     }
 
     function handleStart(e) {
-      e.preventDefault();
-      const touches = e.touches ? e.touches : [e];
-      const { canvasX, canvasY } = getCanvasCoordinates(touches[0].clientX, touches[0].clientY);
-
-      if (touches.length === 1) {
-        const handle = getResizeHandle(canvasX, canvasY);
-        if (handle !== null && (!isMobile && (handle === 'bottom-right' || handle === 'rotate') || isMobile)) {
-          if (handle === 'rotate') {
-            isRotating = true;
-            startAngle = Math.atan2(canvasY - (rect.y + rect.h / 2), canvasX - (rect.x + rect.w / 2)) - rect.rotation;
-          } else {
-            isResizing = true;
-            resizeHandle = handle;
-          }
-        } else if (isInsideRect(canvasX, canvasY)) {
-          isDragging = true;
+        e.preventDefault();
+        const touches = e.touches ? e.touches : [e];
+        const { canvasX, canvasY } = getCanvasCoordinates(touches[0].clientX, touches[0].clientY);
+  
+        if (isMobile) {
+            if (touches.length === 1) {
+                if (isInsideRect(canvasX, canvasY)) {
+                    isDragging = true;
+                }
+            } else if (touches.length === 2) {
+                const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
+                startAngle = Math.atan2(y2 - canvasY, x2 - canvasX) - rect.rotation;
+                startDistance = Math.hypot(y2 - canvasY, x2 - canvasX);
+                isRotating = true;
+            }
+        } else {
+            const handle = getResizeHandle(canvasX, canvasY);
+            if (handle !== null) {
+                if (handle === 'rotate') {
+                    isRotating = true;
+                    startAngle = Math.atan2(canvasY - (rect.y + rect.h / 2), canvasX - (rect.x + rect.w / 2)) - rect.rotation;
+                } else {
+                    isResizing = true;
+                    resizeHandle = handle;
+                }
+            } else if (isInsideRect(canvasX, canvasY)) {
+                isDragging = true;
+            }
         }
-      } else if (touches.length === 2) {
-        const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
-        startAngle = Math.atan2(y2 - canvasY, x2 - canvasX) - rect.rotation;
-        startDistance = Math.hypot(y2 - canvasY, x2 - canvasX);
-        isRotating = true;
-      }
     }
 
     function handleMove(e) {
-      e.preventDefault();
-      const touches = e.touches ? e.touches : [e];
-      const { canvasX, canvasY } = getCanvasCoordinates(touches[0].clientX, touches[0].clientY);
-
-      if (isDragging) {
-        rect.x = constrain(canvasX - rect.w / 2, 0, canvas.width - rect.w);
-        rect.y = constrain(canvasY - rect.h / 2, 0, canvas.height - rect.h);
-      } else if (isResizing && (!isMobile && resizeHandle === 'bottom-right' || isMobile)) {
-        resizeRect(canvasX, canvasY);
-      } else if (isRotating) {
-        if (touches.length === 2) {
-          const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
-          const angle = Math.atan2(y2 - canvasY, x2 - canvasX) - startAngle;
-          rect.rotation = angle;
-
-          const distance = Math.hypot(y2 - canvasY, x2 - canvasX);
-          const scale = distance / startDistance;
-          rect.w *= scale;
-          rect.h *= scale;
-          startDistance = distance;
+        e.preventDefault();
+        const touches = e.touches ? e.touches : [e];
+        const { canvasX, canvasY } = getCanvasCoordinates(touches[0].clientX, touches[0].clientY);
+  
+        if (isMobile) {
+            if (isDragging) {
+                rect.x = constrain(canvasX - rect.w / 2, 0, canvas.width - rect.w);
+                rect.y = constrain(canvasY - rect.h / 2, 0, canvas.height - rect.h);
+            } else if (isRotating && touches.length === 2) {
+                const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
+                const angle = Math.atan2(y2 - canvasY, x2 - canvasX) - startAngle;
+                rect.rotation = constrain(angle, -Math.PI / 2 + 0.15, Math.PI / 2 - 0.15);
+  
+                const distance = Math.hypot(y2 - canvasY, x2 - canvasX);
+                const scale = distance / startDistance;
+                rect.w *= scale;
+                rect.h *= scale;
+                startDistance = distance;
+            }
         } else {
-          const angle = Math.atan2(canvasY - (rect.y + rect.h / 2), canvasX - (rect.x + rect.w / 2)) - startAngle;
-          rect.rotation = angle;
+            if (isDragging) {
+                rect.x = constrain(canvasX - rect.w / 2, 0, canvas.width - rect.w);
+                rect.y = constrain(canvasY - rect.h / 2, 0, canvas.height - rect.h);
+            } else if (isResizing && resizeHandle === 'bottom-right') {
+                resizeRect(canvasX, canvasY);
+            } else if (isRotating) {
+                const angle = Math.atan2(canvasY - (rect.y + rect.h / 2), canvasX - (rect.x + rect.w / 2)) - startAngle;
+                rect.rotation = constrain(angle, -Math.PI / 2 + 0.15, Math.PI / 2 - 0.15);
+            }
         }
-      }
-
-      redraw();
+  
+        redraw();
     }
 
     function handleEnd() {
@@ -336,33 +359,36 @@
     }
 
     function getResizeHandle(x, y) {
-      const handleSize = 10;
+      const handleSize = 20; // Increased handle size here
       const cos = Math.cos(rect.rotation);
       const sin = Math.sin(rect.rotation);
       const centerX = rect.x + rect.w / 2;
       const centerY = rect.y + rect.h / 2;
 
       if (!isMobile) { // Desktop
-        // Rotation handle (20x20px red square)
-        const rotateX = centerX + (rect.w / 2 - 20 / 2) * cos - (rect.h / 2 - 20 / 2) * sin + 20 / 2;
-        const rotateY = centerY + (rect.w / 2 - 20 / 2) * sin + (rect.h / 2 - 20 / 2) * cos - 20 / 2;
-        if (Math.abs(x - rotateX) < 10 && Math.abs(y - rotateY) < 10) {
+        // Rotation handle (white circle with red curved arrow)
+        const rotateX = centerX + (rect.w / 2 - handleSize - 5) * cos - (rect.h / 2 - handleSize - 5) * sin;
+        const rotateY = centerY + (rect.w / 2 - handleSize - 5) * sin + (rect.h / 2 - handleSize - 5) * cos;
+        if (Math.abs(x - rotateX) < handleSize + 5 && Math.abs(y - rotateY) < handleSize + 5) {
           canvas.style.cursor = 'crosshair';
           return 'rotate';
         }
-      }
 
-      const corners = [
-        { x: rect.w / 2, y: rect.h / 2, cursor: 'nwse-resize' },
-      ];
+        const corners = [
+          { x: rect.w / 2, y: rect.h / 2, cursor: 'nwse-resize' },
+        ];
 
-      for (let i = 0; i < corners.length; i++) {
-        const rotatedX = corners[i].x * cos - corners[i].y * sin + centerX;
-        const rotatedY = corners[i].x * sin + corners[i].y * cos + centerY;
-        if (Math.abs(x - rotatedX) < handleSize && Math.abs(y - rotatedY) < handleSize) {
-          canvas.style.cursor = corners[i].cursor;
-          return 'bottom-right';
+        for (let i = 0; i < corners.length; i++) {
+          const rotatedX = corners[i].x * cos - corners[i].y * sin + centerX;
+          const rotatedY = corners[i].x * sin + corners[i].y * cos + centerY;
+          if (Math.abs(x - rotatedX) < handleSize && Math.abs(y - rotatedY) < handleSize) {
+            canvas.style.cursor = corners[i].cursor;
+            return 'bottom-right';
+          }
         }
+
+        canvas.style.cursor = 'default';
+        return null;
       }
 
       canvas.style.cursor = 'default';
@@ -392,6 +418,13 @@
       return { canvasX, canvasY };
     }
 
+    function showCornerPoints(visible) {
+      const display = visible ? 'block' : 'none';
+      document.querySelectorAll('.corner-point').forEach(point => {
+        point.style.display = display;
+      });
+    }
+
     function redraw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (image) {
@@ -405,27 +438,41 @@
       ctx.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
 
       if (!isMobile) { // Desktop
-        // Draw rotation handle (20x20px red square)
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-        ctx.fillRect(rect.w / 2 - 10, -rect.h / 2 - 10, 20, 20);
+        // Draw rotation handle (white circle with red curved arrow)
+        const handleSize = 20;  // Increased size for usability
+        const rotateX = rect.w / 2 - handleSize - 5;
+        const rotateY = -rect.h / 2;
+
+        // Draw rotation handle
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(rotateX, rotateY, handleSize, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(rotateX, rotateY, handleSize - 5, 0.2 * Math.PI, 1.8 * Math.PI);
+        ctx.stroke();
+
+        // Add a class to identify the rotation handle for later toggling
+        ctx.save();  // Save the state before transformations
+        ctx.translate(rotateX, rotateY);
+        ctx.rotate(-rect.rotation);  // Rotate back to original for the element
+        ctx.restore();  // Restore the state after drawing
 
         // Draw resize handle
         ctx.fillStyle = 'white';
         ctx.strokeStyle = 'black';
-        const handleSize = 8;
         ctx.beginPath();
         ctx.arc(rect.w / 2, rect.h / 2, handleSize, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
       } else { // Mobile
         // Draw resize handles
+        const handleSize = 8;
         ctx.fillStyle = 'white';
         ctx.strokeStyle = 'black';
-        const handleSize = 8;
         [
-          { x: -rect.w / 2, y: -rect.h / 2 },
-          { x: rect.w / 2, y: -rect.h / 2 },
-          { x: -rect.w / 2, y: rect.h / 2 },
           { x: rect.w / 2, y: rect.h / 2 },
         ].forEach(({ x, y }) => {
           ctx.beginPath();
@@ -443,5 +490,4 @@
     redraw();
   </script>
 </body>
-
 </html>
