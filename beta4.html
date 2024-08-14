@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BETA - Shielding Eyes App</title>
+  <title>BETA - Shielding Eyes</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -122,8 +122,8 @@
 </head>
 <body>
   <div class="container">
-    <h1>BETA - Shielding Eyes (white bar added) ◼️◼️👀🛡️</h1>
-    <p id="instructions">GUIDE: After import, tap "Shield eyes". Drag the bar to move it. Use corner handles to resize. On mobile, use two fingers to pinch-zoom and rotate.</p>
+    <h1>BETA - Shielding Eyes ◼️◼️👀🛡️</h1>
+    <p id="instructions">GUIDE:</p>
     <div class="button-container">
       <label for="image-upload">🖼️ Import Photo</label>
       <input type="file" id="image-upload" accept="image/*">
@@ -138,7 +138,7 @@
         <button id="add-light-censor" class="shield-button">💡 Light shield</button>
       </div>
     </div>
-    <p id="updates">update_5: Center-based resizing and rotation implemented.<br>update_4: Direct manipulation of censor bar added. Use corner handles to resize, two fingers to rotate on mobile.<br>update_3: Light version of shielded bar added<br>update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>update_1: All aspect ratios supported now (like 4:3, 16:9, 1:2 etc).</p>
+    <p id="updates">update_3: Mobile update with pinch to resize/rotate, light bar added.<br>update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>update_1: All aspect ratios supported now (like 4:3, 16:9, 1:2 etc).</p>
   </div>
   <div id="footer">Made by Zerodartz, 2024 - Report bugs <a href="https://github.com/zerodartz/shielding-eyes/">on GitHub</a><br>
     <a href="https://zerodartz.github.io/shielding-eyes/">Production version</a>
@@ -191,6 +191,13 @@
     canvas.addEventListener('touchmove', handleMove);
     canvas.addEventListener('touchend', handleEnd);
 
+    const instructions = document.getElementById('instructions');
+    if (isMobile) {
+      instructions.innerHTML = 'GUIDE: After import, tap "Shield eyes". Drag the bar to move it.<br>Use the bottom-right handle to resize the shape.<br>Use two fingers to pinch-zoom for resize and rotate.';
+    } else {
+      instructions.innerHTML = 'GUIDE: After import, click "Dark shield". Drag the bar to move it.<br>Use the top-right handle to rotate and the bottom-right handle to resize.';
+    }
+    
     function handleImageUpload(e) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
