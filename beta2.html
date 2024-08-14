@@ -141,6 +141,7 @@
       </div>
     </div>
     <p id="updates">
+      update_5: Center-based resizing and rotation implemented.<br>
       update_4: Direct manipulation of censor bar added. Use corner handles to resize, two fingers to rotate on mobile.<br>
       update_3: Light version of shielded bar added<br>
       update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>
@@ -291,8 +292,15 @@
 
         const distance = Math.hypot(y2 - canvasY, x2 - canvasX);
         const scale = distance / startDistance;
-        rect.w *= scale;
-        rect.h *= scale;
+        const newW = rect.w * scale;
+        const newH = rect.h * scale;
+        
+        // Adjust position to keep the center fixed
+        rect.x += (rect.w - newW) / 2;
+        rect.y += (rect.h - newH) / 2;
+        
+        rect.w = newW;
+        rect.h = newH;
         startDistance = distance;
       }
 
@@ -305,17 +313,53 @@
       isRotating = false;
     }
 
+    function resizeRect(x, y) {
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      const dx = x - centerX;
+      const dy = y - centerY;
+      const angle = Math.atan2(dy, dx) - rect.rotation;
+      const dist = Math.sqrt(dx * dx + dy * dy) * 2; // Multiply by 2 for full width/height
+
+      let newW = rect.w;
+      let newH = rect.h;
+
+      if (resizeHandle % 2 === 0) {
+        newW = dist * Math.abs(Math.cos(angle));
+        newH = dist * Math.abs(Math.sin(angle));
+      } else {
+        newW = dist * Math.abs(Math.sin(angle));
+        newH = dist * Math.abs(Math.cos(angle));
+      }
+
+      newW = constrain(newW, 30, canvas.width);
+      newH = constrain(newH, 10, canvas.height);
+
+      // Adjust position to keep the center fixed
+      rect.x = centerX - newW / 2;
+      rect.y = centerY - newH / 2;
+      rect.w = newW;
+      rect.h = newH;
+    }
+
     function getResizeHandle(x, y) {
       const handleSize = 10;
+      const cos = Math.cos(rect.rotation);
+      const sin = Math.sin(rect.rotation);
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+
       const corners = [
-        { x: rect.x, y: rect.y, cursor: 'nwse-resize' },
-        { x: rect.x + rect.w, y: rect.y, cursor: 'nesw-resize' },
-        { x: rect.x, y: rect.y + rect.h, cursor: 'nesw-resize' },
-        { x: rect.x + rect.w, y: rect.y + rect.h, cursor: 'nwse-resize' },
+        { x: -rect.w / 2, y: -rect.h / 2, cursor: 'nwse-resize' },
+        { x: rect.w / 2, y: -rect.h / 2, cursor: 'nesw-resize' },
+        { x: -rect.w / 2, y: rect.h / 2, cursor: 'nesw-resize' },
+        { x: rect.w / 2, y: rect.h / 2, cursor: 'nwse-resize' },
       ];
 
       for (let i = 0; i < corners.length; i++) {
-        if (Math.abs(x - corners[i].x) < handleSize && Math.abs(y - corners[i].y) < handleSize) {
+        const rotatedX = corners[i].x * cos - corners[i].y * sin + centerX;
+        const rotatedY = corners[i].x * sin + corners[i].y * cos + centerY;
+        if (Math.abs(x - rotatedX) < handleSize && Math.abs(y - rotatedY) < handleSize) {
           canvas.style.cursor = corners[i].cursor;
           return i;
         }
@@ -325,30 +369,11 @@
       return null;
     }
 
-    function resizeRect(x, y) {
-      const dx = x - (rect.x + rect.w / 2);
-      const dy = y - (rect.y + rect.h / 2);
-      const angle = Math.atan2(dy, dx) - rect.rotation;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      let newW = rect.w;
-      let newH = rect.h;
-
-      if (resizeHandle % 2 === 0) {
-        newW = dist * 2 * Math.abs(Math.cos(angle));
-        newH = dist * 2 * Math.abs(Math.sin(angle));
-      } else {
-        newW = dist * 2 * Math.abs(Math.sin(angle));
-        newH = dist * 2 * Math.abs(Math.cos(angle));
-      }
-
-      rect.w = constrain(newW, 30, canvas.width);
-      rect.h = constrain(newH, 10, canvas.height);
-    }
-
     function isInsideRect(x, y) {
-      const dx = x - (rect.x + rect.w / 2);
-      const dy = y - (rect.y + rect.h / 2);
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      const dx = x - centerX;
+      const dy = y - centerY;
       const angle = Math.atan2(dy, dx) - rect.rotation;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
