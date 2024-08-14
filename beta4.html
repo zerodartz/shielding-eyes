@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BETA - Shielding Eyes App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      margin: 0;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    #instructions {
+      font-size: 14px;
+    }
+
+    #updates {
+      font-size: 12px;
+      padding-top: 12px;
+    }
+
+    .container {
+      max-width: 512px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 26px;
+    }
+
+    a {
+      color: #fffeee;
+    }
+
+    #canvas-container {
+      display: flex;
+      justify-content: center;
+      margin: 8px;
+      border: 1px solid #ffffff;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    canvas {
+      border: 1px solid #ffffff;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    button, .button-container label {
+      background-color: #121212;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      flex: 1;
+      text-align: center;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .button-container input[type="file"] {
+      display: none;
+    }
+
+    button:hover, .button-container label:hover {
+      background-color: #333333;
+    }
+
+    .shield-button {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      background-color: #121212;
+      color: #ffffff;
+      transition: background-color 0.3s;
+    }
+
+    .shield-button:hover {
+      background-color: #333333;
+    }
+
+    .shield-button.active {
+      background-color: #444444;
+    }
+
+    #footer {
+      text-align: center;
+      font-size: 10px;
+    }
+
+    @media (max-width: 512px) {
+      h1 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>BETA - Shielding Eyes (white bar added) ◼️◼️👀🛡️</h1>
+    <p id="instructions">GUIDE: After import, tap "Shield eyes". Drag the bar to move it. Use corner handles to resize. On mobile, use two fingers to pinch-zoom and rotate.</p>
+    <div class="button-container">
+      <label for="image-upload">🖼️ Import Photo</label>
+      <input type="file" id="image-upload" accept="image/*">
+      <button id="save-image">Save 🛡️ photo</button>
+    </div>
+    <div id="canvas-container">
+      <canvas id="editor-canvas"></canvas>
+    </div>
+    <div class="controls">
+      <div class="button-container">
+        <button id="add-dark-censor" class="shield-button">🛡️ Dark shield</button>
+        <button id="add-light-censor" class="shield-button">💡 Light shield</button>
+      </div>
+    </div>
+    <p id="updates">
+      update_5: Center-based resizing and rotation implemented.<br>
+      update_4: Direct manipulation of censor bar added. Use corner handles to resize, two fingers to rotate on mobile.<br>
+      update_3: Light version of shielded bar added<br>
+      update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>
+      update_1: All aspect ratios supported now (like 4:3, 16:9, 1:2 etc)
+    </p>
+  </div>
+  <div id="footer">Made by Zerodartz, 2024 - Report bugs <a href="https://github.com/zerodartz/shielding-eyes/">on
+      GitHub</a><br>
+    <a href="https://zerodartz.github.io/shielding-eyes/">Production version</a>
+  </div>
+  <script>
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let canvas = document.getElementById('editor-canvas');
+    let ctx = canvas.getContext('2d');
+    let image;
+    let rect = {
+      x: 140,
+      y: 170,
+      w: 250,
+      h: 100,
+      rotation: 0,
+      color: 'black'
+    };
+
+    let isDragging = false;
+    let isResizing = false;
+    let isRotating = false;
+    let startAngle = 0;
+    let startDistance = 0;
+    let resizeHandle = '';
+
+    function constrain(value, min, max) {
+      return Math.max(min, Math.min(value, max));
+    }
+
+    function resizeCanvas() {
+      const container = document.getElementById('canvas-container');
+      const containerWidth = container.clientWidth;
+      const scale = containerWidth / canvas.width;
+      canvas.style.width = `${containerWidth}px`;
+      canvas.style.height = `${canvas.height * scale}px`;
+    }
+
+    document.getElementById('image-upload').addEventListener('change', handleImageUpload);
+    document.getElementById('add-dark-censor').addEventListener('click', () => addCensorBar('black'));
+    document.getElementById('add-light-censor').addEventListener('click', () => addCensorBar('white'));
+    document.getElementById('save-image').addEventListener('click', saveImage);
+
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('touchstart', handleStart);
+    canvas.addEventListener('touchmove', handleMove);
+    canvas.addEventListener('touchend', handleEnd);
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function(f) {
+        image = new Image();
+        image.onload = function() {
+          let width, height;
+          if (image.width < image.height) {
+            width = 512;
+            height = 512 * (image.height / image.width);
+          } else {
+            height = 512;
+            width = 512 * (image.width / image.height);
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          resizeCanvas();
+
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        };
+        image.src = f.target.result;
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function addCensorBar(color) {
+      rect.color = color;
+      document.getElementById('add-dark-censor').classList.toggle('active', color === 'black');
+      document.getElementById('add-light-censor').classList.toggle('active', color === 'white');
+      redraw();
+    }
+
+    function saveImage() {
+      const dataURL = canvas.toDataURL('image/png');
+      if (isMobile) {
+        const newTab = window.open();
+        newTab.document.body.innerHTML = `<img src="${dataURL}" alt="Saved Image" style="width:100%; height:auto;">`;
+      } else {
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'shielded-eyes-pfp.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+
+    function handleStart(e) {
+      e.preventDefault();
+      const touches = e.touches ? e.touches : [e];
+      const { canvasX, canvasY } = getCanvasCoordinates(touches[0].clientX, touches[0].clientY);
+
+      if (touches.length === 1) {
+        const handle = getResizeHandle(canvasX, canvasY);
+        if (handle !== null && (!isMobile && (handle === 'bottom-right' || handle === 'rotate') || isMobile)) {
+          if (handle === 'rotate') {
+            isRotating = true;
+            startAngle = Math.atan2(canvasY - (rect.y + rect.h / 2), canvasX - (rect.x + rect.w / 2)) - rect.rotation;
+          } else {
+            isResizing = true;
+            resizeHandle = handle;
+          }
+        } else if (isInsideRect(canvasX, canvasY)) {
+          isDragging = true;
+        }
+      } else if (touches.length === 2) {
+        const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
+        startAngle = Math.atan2(y2 - canvasY, x2 - canvasX) - rect.rotation;
+        startDistance = Math.hypot(y2 - canvasY, x2 - canvasX);
+        isRotating = true;
+      }
+    }
+
+    function handleMove(e) {
+      e.preventDefault();
+      const touches = e.touches ? e.touches : [e];
+      const { canvasX, canvasY } = getCanvasCoordinates(touches[0].clientX, touches[0].clientY);
+
+      if (isDragging) {
+        rect.x = constrain(canvasX - rect.w / 2, 0, canvas.width - rect.w);
+        rect.y = constrain(canvasY - rect.h / 2, 0, canvas.height - rect.h);
+      } else if (isResizing && (!isMobile && resizeHandle === 'bottom-right' || isMobile)) {
+        resizeRect(canvasX, canvasY);
+      } else if (isRotating) {
+        if (touches.length === 2) {
+          const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
+          const angle = Math.atan2(y2 - canvasY, x2 - canvasX) - startAngle;
+          rect.rotation = angle;
+
+          const distance = Math.hypot(y2 - canvasY, x2 - canvasX);
+          const scale = distance / startDistance;
+          rect.w *= scale;
+          rect.h *= scale;
+          startDistance = distance;
+        } else {
+          const angle = Math.atan2(canvasY - (rect.y + rect.h / 2), canvasX - (rect.x + rect.w / 2)) - startAngle;
+          rect.rotation = angle;
+        }
+      }
+
+      redraw();
+    }
+
+    function handleEnd() {
+      isDragging = false;
+      isResizing = false;
+      isRotating = false;
+    }
+
+    function resizeRect(x, y) {
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      const dx = x - centerX;
+      const dy = y - centerY;
+      const angle = Math.atan2(dy, dx) - rect.rotation;
+      const dist = 2 * Math.sqrt(dx * dx + dy * dy);
+
+      let newW = Math.abs(dist * Math.cos(angle));
+      let newH = Math.abs(dist * Math.sin(angle));
+
+      newW = constrain(newW, 30, canvas.width);
+      newH = constrain(newH, 10, canvas.height);
+
+      rect.x = centerX - newW / 2;
+      rect.y = centerY - newH / 2;
+      rect.w = newW;
+      rect.h = newH;
+    }
+
+    function getResizeHandle(x, y) {
+      const handleSize = 10;
+      const cos = Math.cos(rect.rotation);
+      const sin = Math.sin(rect.rotation);
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+
+      if (!isMobile) { // Desktop
+        // Rotation handle (20x20px red square)
+        const rotateX = centerX + (rect.w / 2 - 20 / 2) * cos - (rect.h / 2 - 20 / 2) * sin + 20 / 2;
+        const rotateY = centerY + (rect.w / 2 - 20 / 2) * sin + (rect.h / 2 - 20 / 2) * cos - 20 / 2;
+        if (Math.abs(x - rotateX) < 10 && Math.abs(y - rotateY) < 10) {
+          canvas.style.cursor = 'crosshair';
+          return 'rotate';
+        }
+      }
+
+      const corners = [
+        { x: rect.w / 2, y: rect.h / 2, cursor: 'nwse-resize' },
+      ];
+
+      for (let i = 0; i < corners.length; i++) {
+        const rotatedX = corners[i].x * cos - corners[i].y * sin + centerX;
+        const rotatedY = corners[i].x * sin + corners[i].y * cos + centerY;
+        if (Math.abs(x - rotatedX) < handleSize && Math.abs(y - rotatedY) < handleSize) {
+          canvas.style.cursor = corners[i].cursor;
+          return 'bottom-right';
+        }
+      }
+
+      canvas.style.cursor = 'default';
+      return null;
+    }
+
+    function isInsideRect(x, y) {
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      const dx = x - centerX;
+      const dy = y - centerY;
+      const angle = Math.atan2(dy, dx) - rect.rotation;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      return (
+        Math.abs(dist * Math.cos(angle)) < rect.w / 2 &&
+        Math.abs(dist * Math.sin(angle)) < rect.h / 2
+      );
+    }
+
+    function getCanvasCoordinates(clientX, clientY) {
+      const canvasRect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / canvasRect.width;
+      const scaleY = canvas.height / canvasRect.height;
+      const canvasX = (clientX - canvasRect.left) * scaleX;
+      const canvasY = (clientY - canvasRect.top) * scaleY;
+      return { canvasX, canvasY };
+    }
+
+    function redraw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (image) {
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.save();
+      ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
+      ctx.rotate(rect.rotation);
+      ctx.fillStyle = rect.color;
+      ctx.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
+
+      if (!isMobile) { // Desktop
+        // Draw rotation handle (20x20px red square)
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.fillRect(rect.w / 2 - 10, -rect.h / 2 - 10, 20, 20);
+
+        // Draw resize handle
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'black';
+        const handleSize = 8;
+        ctx.beginPath();
+        ctx.arc(rect.w / 2, rect.h / 2, handleSize, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else { // Mobile
+        // Draw resize handles
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'black';
+        const handleSize = 8;
+        [
+          { x: -rect.w / 2, y: -rect.h / 2 },
+          { x: rect.w / 2, y: -rect.h / 2 },
+          { x: -rect.w / 2, y: rect.h / 2 },
+          { x: rect.w / 2, y: rect.h / 2 },
+        ].forEach(({ x, y }) => {
+          ctx.beginPath();
+          ctx.arc(x, y, handleSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+      }
+
+      ctx.restore();
+    }
+
+    // Initial draw
+    resizeCanvas();
+    redraw();
+  </script>
+</body>
+
+</html>
