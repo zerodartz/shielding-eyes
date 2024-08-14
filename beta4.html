@@ -264,6 +264,8 @@
         if (touches.length === 1) {
           if (isInsideRect(canvasX, canvasY)) {
             isDragging = true;
+          } else if (isBottomRightCorner(canvasX, canvasY)) {
+            isResizing = true;
           }
         } else if (touches.length === 2) {
           const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
@@ -306,6 +308,8 @@
           rect.w *= scale;
           rect.h *= scale;
           startDistance = distance;
+        } else if (isResizing) {
+          resizeRect(canvasX, canvasY);
         }
       } else {
         if (isDragging) {
@@ -346,6 +350,19 @@
       rect.y = centerY - newH / 2;
       rect.w = newW;
       rect.h = newH;
+    }
+
+    function isBottomRightCorner(x, y) {
+      const handleSize = 20; // Handle size for easier interaction
+      const cos = Math.cos(rect.rotation);
+      const sin = Math.sin(rect.rotation);
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+
+      const resizeX = centerX + (rect.w / 2) * cos - (rect.h / 2) * sin;
+      const resizeY = centerY + (rect.w / 2) * sin + (rect.h / 2) * cos;
+
+      return Math.abs(x - resizeX) < handleSize && Math.abs(y - resizeY) < handleSize;
     }
 
     function getResizeHandle(x, y) {
@@ -424,23 +441,25 @@
       context.fillStyle = rect.color;
       context.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
 
-      if (!isMobile && !temp) { // Desktop
+      if (!temp) { // Draw handles only on the main canvas
         const handleSize = 16; // Handle size for usability
 
-        // Draw rotation handle at the top-right corner
-        const rotateX = rect.w / 2;
-        const rotateY = -rect.h / 2;
-        context.fillStyle = 'white';
-        context.beginPath();
-        context.arc(rotateX, rotateY, handleSize, 0, Math.PI * 2);
-        context.fill();
-        context.strokeStyle = 'red';
-        context.lineWidth = 2;
-        context.beginPath();
-        context.arc(rotateX, rotateY, handleSize - 5, 0.2 * Math.PI, 1.8 * Math.PI);
-        context.stroke();
+        // Draw rotation handle at the top-right corner (desktop only)
+        if (!isMobile) {
+          const rotateX = rect.w / 2;
+          const rotateY = -rect.h / 2;
+          context.fillStyle = 'white';
+          context.beginPath();
+          context.arc(rotateX, rotateY, handleSize, 0, Math.PI * 2);
+          context.fill();
+          context.strokeStyle = 'red';
+          context.lineWidth = 2;
+          context.beginPath();
+          context.arc(rotateX, rotateY, handleSize - 5, 0.2 * Math.PI, 1.8 * Math.PI);
+          context.stroke();
+        }
 
-        // Draw resize handle at the bottom-right corner
+        // Draw resize handle at the bottom-right corner (both desktop and mobile)
         const resizeX = rect.w / 2;
         const resizeY = rect.h / 2;
         context.fillStyle = 'white';
