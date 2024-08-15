@@ -1,6 +1,6 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,12 +16,12 @@
     }
 
     #instructions {
-        font-size: 14px;
+      font-size: 14px;
     }
 
     #updates {
-        font-size: 12px;
-        padding-top: 12px;
+      font-size: 12px;
+      padding-top: 12px;
     }
 
     .container {
@@ -38,58 +38,6 @@
 
     a {
       color: #fffeee;
-    }
-
-    #slider-container {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .slider-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .slider-group label {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      -webkit-appearance: none;
-      background: #333;
-      outline: none;
-      opacity: 0.7;
-      transition: opacity 0.2s;
-      height: 10px;
-      border-radius: 5px;
-    }
-
-    input[type="range"]:hover {
-      opacity: 1;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 24px;
-      height: 24px;
-      background: #ffffff;
-      cursor: pointer;
-      border-radius: 50%;
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      background: #ffffff;
-      cursor: pointer;
-      border-radius: 50%;
     }
 
     #canvas-container {
@@ -119,7 +67,7 @@
       gap: 10px;
     }
 
-    button {
+    button, .button-container label {
       background-color: #121212;
       color: #ffffff;
       border: 2px solid #ffffff;
@@ -129,30 +77,36 @@
       flex: 1;
       text-align: center;
       font-size: 14px;
-    }
-
-    .button-container label {
-    background-color: #121212;
-    color: #ffffff;
-    border: 2px solid #ffffff;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    flex: 1;
-    text-align: center;
-    font-size: 14px;
-    /* Added styles for vertical centering */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .button-container input[type="file"] {
       display: none;
     }
 
-    button:hover {
+    button:hover, .button-container label:hover {
       background-color: #333333;
+    }
+
+    .shield-button {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      background-color: #121212;
+      color: #ffffff;
+      transition: background-color 0.3s;
+    }
+
+    .shield-button:hover {
+      background-color: #333333;
+    }
+
+    .shield-button.active {
+      background-color: #444444;
     }
 
     #footer {
@@ -167,11 +121,10 @@
     }
   </style>
 </head>
-
 <body>
   <div class="container">
-    <h1>Shielding Eyes Photo App ◼️◼️👀🛡️</h1>
-    <p id="instructions">GUIDE: after import TAP "Shield eyes". Drag box to move it.<br> USE Sliders in bottom to resize&rotate. SAVE (mobile) opens new tab - long press on photo to save</p>
+    <h1>Shielding Eyes App ◼️◼️👀🛡️</h1>
+    <p id="instructions">GUIDE:</p>
     <div class="button-container">
       <label for="image-upload">🖼️ Import Photo</label>
       <input type="file" id="image-upload" accept="image/*">
@@ -181,24 +134,12 @@
       <canvas id="editor-canvas"></canvas>
     </div>
     <div class="controls">
-      <button id="add-censor">🛡️ (shield) eyes</button>
-    </div>
-    <div id="slider-container">
-      <div class="slider-group">
-        <label for="width-slider">Width: <span id="width-value">250px</span></label>
-        <input type="range" id="width-slider" min="30" max="500" value="250">
-      </div>
-      <div class="slider-group">
-        <label for="height-slider">Height: <span id="height-value">100px</span></label>
-        <input type="range" id="height-slider" min="10" max="500" value="100">
-      </div>
-      <div class="slider-group">
-        <label for="rotation-slider">Rotation: <span id="rotation-value">0°</span></label>
-        <input type="range" id="rotation-slider" min="-89" max="89" value="0">
+      <div class="button-container">
+        <button id="add-dark-censor" class="shield-button">🛡️ Dark shield</button>
+        <button id="add-light-censor" class="shield-button">💡 Glowing shield</button>
       </div>
     </div>
-    <p id="updates">update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>
-      update_1: All aspect ratios supported now (like 4:3, 16:9, 1:2 etc)</p>
+    <p id="updates">update_3: Mobile update with pinch to resize/rotate, glowing bar added.<br>update_2: After clicking "Save photo" on mobile new tab opens where long pressing the image you can save it into your photos app.<br>update_1: All aspect ratios supported now (like 4:3, 16:9, 1:2 etc).</p>
   </div>
   <div id="footer">Made by Zerodartz, 2024 - Report bugs <a href="https://github.com/zerodartz/shielding-eyes/">on
       GitHub</a><br>
@@ -206,6 +147,7 @@
     <p>🦓🛡My other apps: <a href="https://zerodartz.github.io/feelszebraman/zepefy/">Zepe Meme App</a></p>
   </div>
   <script>
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     let canvas = document.getElementById('editor-canvas');
     let ctx = canvas.getContext('2d');
     let image;
@@ -215,12 +157,16 @@
       w: 250,
       h: 100,
       rotation: 0,
-      dragging: false,
-      offsetX: 0,
-      offsetY: 0
+      color: 'black'
     };
 
-    // Helper to keep coordinates within bounds
+    let isDragging = false;
+    let isResizing = false;
+    let isRotating = false;
+    let startAngle = 0;
+    let startDistance = 0;
+    let resizeHandle = '';
+
     function constrain(value, min, max) {
       return Math.max(min, Math.min(value, max));
     }
@@ -234,27 +180,27 @@
     }
 
     document.getElementById('image-upload').addEventListener('change', handleImageUpload);
-    document.getElementById('add-censor').addEventListener('click', addCensorBar);
+    document.getElementById('add-dark-censor').addEventListener('click', () => addCensorBar('black'));
+    document.getElementById('add-light-censor').addEventListener('click', () => addCensorBar('white'));
     document.getElementById('save-image').addEventListener('click', saveImage);
 
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseup', handleMouseUp);
-    canvas.addEventListener('touchstart', handleTouchStart);
-    canvas.addEventListener('touchmove', handleTouchMove);
-    canvas.addEventListener('touchend', handleTouchEnd);
+    let tempCanvas = document.createElement('canvas');
+    let tempCtx = tempCanvas.getContext('2d');
 
-    const widthSlider = document.getElementById('width-slider');
-    const heightSlider = document.getElementById('height-slider');
-    const rotationSlider = document.getElementById('rotation-slider');
-    const widthValueLabel = document.getElementById('width-value');
-    const heightValueLabel = document.getElementById('height-value');
-    const rotationValueLabel = document.getElementById('rotation-value');
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('touchstart', handleStart);
+    canvas.addEventListener('touchmove', handleMove);
+    canvas.addEventListener('touchend', handleEnd);
 
-    widthSlider.addEventListener('input', handleWidthChange);
-    heightSlider.addEventListener('input', handleHeightChange);
-    rotationSlider.addEventListener('input', handleRotationChange);
-
+    const instructions = document.getElementById('instructions');
+    if (isMobile) {
+      instructions.innerHTML = 'GUIDE: After import, tap "Dark/glowing shield". Drag the bar to move it.<br>Use the bottom-right point to reshape/resize.<br>Use two fingers to pinch for resize and rotate.';
+    } else {
+      instructions.innerHTML = 'GUIDE: After import, click "Dark/glowing shield". Drag the bar to move it.<br>Use the top-right red striped point to rotate and bottom-right point to resize.';
+    }
+    
     function handleImageUpload(e) {
       const file = e.target.files[0];
       if (!file.type.startsWith('image/')) {
@@ -267,124 +213,221 @@
       reader.onload = function(f) {
         image = new Image();
         image.onload = function() {
-        // Calculate the correct canvas size
-        let width, height;
-        if (image.width < image.height) {
+          let width, height;
+          if (image.width < image.height) {
             width = 512;
             height = 512 * (image.height / image.width);
-        } else {
+          } else {
             height = 512;
             width = 512 * (image.width / image.height);
-        }
+          }
 
-        canvas.width = width;
-        canvas.height = height;
+          canvas.width = width;
+          canvas.height = height;
 
-        resizeCanvas();
+          tempCanvas.width = width;
+          tempCanvas.height = height;
 
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resizeCanvas();
+
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        };
+        image.src = f.target.result;
       };
-      image.src = f.target.result;
-    };
-
 
       reader.readAsDataURL(file);
     }
 
-    function addCensorBar() {
-      redraw();
-    }
-
-    function saveImage() {
-    const dataURL = canvas.toDataURL('image/png');
-  
-    // Check if the device is mobile (iOS, Android, etc.)
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    if (isMobile) {
-    // On mobile devices, open the image in a new tab for long-press saving
-      const newTab = window.open();
-      newTab.document.body.innerHTML = `<img src="${dataURL}" alt="Saved Image" style="width:100%; height:auto;">`;
-    } else {
-    // On desktop, trigger a download
-      const link = document.createElement('a');
-      link.href = dataURL;
-      link.download = 'shielded-eyes-pfp.png';
-      document.body.appendChild(link); // For Firefox, append the link to the DOM
-      link.click();
-      document.body.removeChild(link); // Remove the link after the download is triggered
+    function addCensorBar(color) {
+  if (color === 'white') {
+    rect.color = 'black';
+    rect.border = '2px solid white';
+    rect.glow = '0 0 10px #FFFFE0'; // Light yellow glow
+  } else {
+    rect.color = 'black';
+    rect.border = null;
+    rect.glow = null;
   }
+  document.getElementById('add-dark-censor').classList.toggle('active', color === 'black');
+  document.getElementById('add-light-censor').classList.toggle('active', color === 'white');
+  redraw();
 }
 
 
-    function handleMouseDown(e) {
-      handleStart(e.clientX, e.clientY);
+    function saveImage() {
+      redraw(true);
+
+      const dataURL = tempCanvas.toDataURL('image/png');
+
+      if (isMobile) {
+        const newTab = window.open();
+        newTab.document.body.innerHTML = `<img src="${dataURL}" alt="Saved Image" style="width:100%; height:auto;">`;
+      } else {
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'shielded-eyes-pfp.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      redraw();
     }
 
-    function handleMouseMove(e) {
-      handleMove(e.clientX, e.clientY);
-    }
+    function handleStart(e) {
+      e.preventDefault();
+      const touches = e.touches ? e.touches : [e];
+      const { canvasX, canvasY } = getCanvasCoordinates(touches[0].clientX, touches[0].clientY);
 
-    function handleMouseUp() {
-      handleEnd();
-    }
-
-    function handleTouchStart(e) {
-      if (e.touches.length === 1) {
-        e.preventDefault();
-        handleStart(e.touches[0].clientX, e.touches[0].clientY);
+      if (isMobile) {
+        if (touches.length === 1) {
+          if (isInsideRect(canvasX, canvasY)) {
+            isDragging = true;
+          } else if (isBottomRightCorner(canvasX, canvasY)) {
+            isResizing = true;
+          }
+        } else if (touches.length === 2) {
+          const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
+          startAngle = Math.atan2(y2 - canvasY, x2 - canvasX) - rect.rotation;
+          startDistance = Math.hypot(y2 - canvasY, x2 - canvasX);
+          isRotating = true;
+        }
+      } else {
+        const handle = getResizeHandle(canvasX, canvasY);
+        if (handle !== null) {
+          if (handle === 'rotate') {
+            isRotating = true;
+            startAngle = Math.atan2(canvasY - (rect.y + rect.h / 2), canvasX - (rect.x + rect.w / 2)) - rect.rotation;
+          } else {
+            isResizing = true;
+            resizeHandle = handle;
+          }
+        } else if (isInsideRect(canvasX, canvasY)) {
+          isDragging = true;
+        }
       }
     }
 
-    function handleTouchMove(e) {
-      if (e.touches.length === 1) {
-        e.preventDefault();
-        handleMove(e.touches[0].clientX, e.touches[0].clientY);
+    function handleMove(e) {
+      e.preventDefault();
+      const touches = e.touches ? e.touches : [e];
+      const { canvasX, canvasY } = getCanvasCoordinates(touches[0].clientX, touches[0].clientY);
+
+      if (isMobile) {
+        if (isDragging) {
+          rect.x = constrain(canvasX - rect.w / 2, 0, canvas.width - rect.w);
+          rect.y = constrain(canvasY - rect.h / 2, 0, canvas.height - rect.h);
+        } else if (isRotating && touches.length === 2) {
+          const { canvasX: x2, canvasY: y2 } = getCanvasCoordinates(touches[1].clientX, touches[1].clientY);
+          const angle = Math.atan2(y2 - canvasY, x2 - canvasX) - startAngle;
+          rect.rotation = constrain(angle, -Math.PI / 2 + 0.15, Math.PI / 2 - 0.15);
+
+          const distance = Math.hypot(y2 - canvasY, x2 - canvasX);
+          const scale = distance / startDistance;
+          rect.w *= scale;
+          rect.h *= scale;
+          startDistance = distance;
+        } else if (isResizing) {
+          resizeRect(canvasX, canvasY);
+        }
+      } else {
+        if (isDragging) {
+          rect.x = constrain(canvasX - rect.w / 2, 0, canvas.width - rect.w);
+          rect.y = constrain(canvasY - rect.h / 2, 0, canvas.height - rect.h);
+        } else if (isResizing && resizeHandle === 'bottom-right') {
+          resizeRect(canvasX, canvasY);
+        } else if (isRotating) {
+          const angle = Math.atan2(canvasY - (rect.y + rect.h / 2), canvasX - (rect.x + rect.w / 2)) - startAngle;
+          rect.rotation = constrain(angle, -Math.PI / 2 + 0.15, Math.PI / 2 - 0.15);
+        }
       }
-    }
-
-    function handleTouchEnd() {
-      handleEnd();
-    }
-
-    function handleStart(clientX, clientY) {
-      const { canvasX, canvasY } = getCanvasCoordinates(clientX, clientY);
-      
-      const rotatedPoint = rotatePoint(canvasX, canvasY, rect.x + rect.w / 2, rect.y + rect.h / 2, -rect.rotation);
-
-      if (isInsideRect(rotatedPoint.x, rotatedPoint.y, rect)) {
-        rect.dragging = true;
-        rect.offsetX = rotatedPoint.x - rect.x;
-        rect.offsetY = rotatedPoint.y - rect.y;
-      }
-    }
-
-    function handleMove(clientX, clientY) {
-      if (!rect.dragging) return;
-
-      const { canvasX, canvasY } = getCanvasCoordinates(clientX, clientY);
-      const rotatedPoint = rotatePoint(canvasX, canvasY, rect.x + rect.w / 2, rect.y + rect.h / 2, -rect.rotation);
-      rect.x = constrain(rotatedPoint.x - rect.offsetX, 0, canvas.width - rect.w);
-      rect.y = constrain(rotatedPoint.y - rect.offsetY, 0, canvas.height - rect.h);
 
       redraw();
     }
 
     function handleEnd() {
-      rect.dragging = false;
+      isDragging = false;
+      isResizing = false;
+      isRotating = false;
     }
 
-    function isInsideRect(x, y, rect) {
-      return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+    function resizeRect(x, y) {
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      const dx = x - centerX;
+      const dy = y - centerY;
+      const angle = Math.atan2(dy, dx) - rect.rotation;
+      const dist = 2 * Math.sqrt(dx * dx + dy * dy);
+
+      let newW = Math.abs(dist * Math.cos(angle));
+      let newH = Math.abs(dist * Math.sin(angle));
+
+      newW = constrain(newW, 30, canvas.width);
+      newH = constrain(newH, 10, canvas.height);
+
+      rect.x = centerX - newW / 2;
+      rect.y = centerY - newH / 2;
+      rect.w = newW;
+      rect.h = newH;
     }
 
-    function rotatePoint(x, y, cx, cy, angle) {
-      const radians = (Math.PI / 180) * angle,
-            cos = Math.cos(radians),
-            sin = Math.sin(radians),
-            nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
-            ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
-      return {x: nx, y: ny};
+    function isBottomRightCorner(x, y) {
+      const handleSize = 20; // Handle size for easier interaction
+      const cos = Math.cos(rect.rotation);
+      const sin = Math.sin(rect.rotation);
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+
+      const resizeX = centerX + (rect.w / 2) * cos - (rect.h / 2) * sin;
+      const resizeY = centerY + (rect.w / 2) * sin + (rect.h / 2) * cos;
+
+      return Math.abs(x - resizeX) < handleSize && Math.abs(y - resizeY) < handleSize;
+    }
+
+    function getResizeHandle(x, y) {
+      const handleSize = 20; // Handle size for easier interaction
+      const cos = Math.cos(rect.rotation);
+      const sin = Math.sin(rect.rotation);
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+
+      if (!isMobile) { // Desktop
+        // Top-right corner for rotation
+        const rotateX = centerX + (rect.w / 2) * cos - (-rect.h / 2) * sin;
+        const rotateY = centerY + (rect.w / 2) * sin + (-rect.h / 2) * cos;
+        if (Math.abs(x - rotateX) < handleSize && Math.abs(y - rotateY) < handleSize) {
+          canvas.style.cursor = 'crosshair';
+          return 'rotate';
+        }
+
+        // Bottom-right corner for resizing
+        const resizeX = centerX + (rect.w / 2) * cos - (rect.h / 2) * sin;
+        const resizeY = centerY + (rect.w / 2) * sin + (rect.h / 2) * cos;
+        if (Math.abs(x - resizeX) < handleSize && Math.abs(y - resizeY) < handleSize) {
+          canvas.style.cursor = 'nwse-resize';
+          return 'bottom-right';
+        }
+
+        canvas.style.cursor = 'default';
+        return null;
+      }
+
+      canvas.style.cursor = 'default';
+      return null;
+    }
+
+    function isInsideRect(x, y) {
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      const dx = x - centerX;
+      const dy = y - centerY;
+      const angle = Math.atan2(dy, dx) - rect.rotation;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      return (
+        Math.abs(dist * Math.cos(angle)) < rect.w / 2 &&
+        Math.abs(dist * Math.sin(angle)) < rect.h / 2
+      );
     }
 
     function getCanvasCoordinates(clientX, clientY) {
@@ -396,39 +439,74 @@
       return { canvasX, canvasY };
     }
 
-    function redraw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (image) {
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      }
-
-      // Translate, rotate, then draw the rectangle
-      ctx.save();
-      ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
-      ctx.rotate(rect.rotation * Math.PI / 180);
-      ctx.fillStyle = 'black';
-      ctx.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
-      ctx.restore();
+    function showHandles(visible) {
+      const display = visible ? 'block' : 'none';
+      document.querySelectorAll('.corner-point').forEach(point => {
+        point.style.display = display;
+      });
     }
 
-    function handleWidthChange() {
-      rect.w = parseInt(widthSlider.value);
-      widthValueLabel.textContent = `${rect.w}px`;
-      redraw();
+    function redraw(temp = false) {
+  const context = temp ? tempCtx : ctx;
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  if (image) {
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  }
+
+  context.save();
+  context.translate(rect.x + rect.w / 2, rect.y + rect.h / 2);
+  context.rotate(rect.rotation);
+  context.fillStyle = rect.color;
+  context.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
+
+  if (rect.border) {
+    context.strokeStyle = 'white';
+    context.lineWidth = 2;
+    context.strokeRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
+  }
+
+  if (rect.glow) {
+    context.shadowColor = '#FFFFE0'; // Light yellow color for glow
+    context.shadowBlur = 10;
+    context.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
+    context.shadowBlur = 0; // Reset shadow blur after drawing
+  }
+
+  if (!temp) {
+    const handleSize = 16;
+
+    if (!isMobile) {
+      const rotateX = rect.w / 2;
+      const rotateY = -rect.h / 2;
+      context.fillStyle = 'white';
+      context.beginPath();
+      context.arc(rotateX, rotateY, handleSize, 0, Math.PI * 2);
+      context.fill();
+      context.strokeStyle = 'red';
+      context.lineWidth = 2;
+      context.beginPath();
+      context.arc(rotateX, rotateY, handleSize - 5, 0.2 * Math.PI, 1.8 * Math.PI);
+      context.stroke();
     }
 
-    function handleHeightChange() {
-      rect.h = parseInt(heightSlider.value);
-      heightValueLabel.textContent = `${rect.h}px`;
-      redraw();
-    }
+    const resizeX = rect.w / 2;
+    const resizeY = rect.h / 2;
+    context.fillStyle = 'white';
+    context.strokeStyle = 'black';
+    context.beginPath();
+    context.arc(resizeX, resizeY, handleSize, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+  }
 
-    function handleRotationChange() {
-      rect.rotation = constrain(parseInt(rotationSlider.value), -89, 89);
-      rotationValueLabel.textContent = `${rect.rotation}°`;
-      redraw();
-    }
+  context.restore();
+}
+
+
+    // Initial draw
+    resizeCanvas();
+    redraw();
   </script>
 </body>
-
 </html>
