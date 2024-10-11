@@ -241,8 +241,8 @@
     function addCensorBar(color) {
   if (color === 'white') {
     rect.color = 'black';
-    rect.border = '12px #fda80d';
-    rect.glow = '0 0 36px rgba(253, 168, 13, 0.9)'; // Light yellow glow
+    rect.border = '8px #fda80d';
+    rect.glow = '0 0 24px #fda80d'; // Light yellow glow
   } else {
     rect.color = 'black';
     rect.border = null;
@@ -462,13 +462,13 @@
 
   if (rect.border) {
     context.strokeStyle = 'white';
-    context.lineWidth = 2;
+    context.lineWidth = 8;
     context.strokeRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
   }
 
   if (rect.glow) {
-    context.shadowColor = '#FFFFE0'; // Light yellow color for glow
-    context.shadowBlur = 10;
+    context.shadowColor = '#fda80d''; // Light yellow color for glow
+    context.shadowBlur = 24;
     context.fillRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
     context.shadowBlur = 0; // Reset shadow blur after drawing
   }
